@@ -14,7 +14,7 @@
 <meta property="og:description" content="SQL injectionComment--, #, &#x2F;* *&#x2F;, ;%00  White space bypass%20, %09, %0a, %0b, %0c, %0d, +, &#x2F;**&#x2F;, ()  or, and bypass||, &amp;&amp;, %7C%7C, %26%26  &#x3D;(equal) bypass&lt;, &gt;, &lt;&gt;, in, like  String">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2021-08-26T00:00:00.000Z">
-<meta property="article:modified_time" content="2021-08-26T12:53:49.247Z">
+<meta property="article:modified_time" content="2021-08-26T12:56:28.416Z">
 <meta property="article:author" content="TroubleMaker">
 <meta property="article:tag" content="NOTE">
 <meta name="twitter:card" content="summary">
@@ -155,8 +155,8 @@
 <h2 id="equal-bypass"><a href="#equal-bypass" class="headerlink" title="=(equal) bypass"></a>=(equal) bypass</h2><pre><code>&lt;, &gt;, &lt;&gt;, in, like
 </code></pre>
 <h2 id="String-bypass"><a href="#String-bypass" class="headerlink" title="String bypass"></a>String bypass</h2><pre><code>ex) admin
-char(0x61646d696e), char(0x61,0x64,0x6d,0x69,0x6e), char(97,100,109,105,110)
-0x61646d696e, 0b0110000101100100011011010110100101101110, concat(&#39;a&#39;,&#39;d&#39;,&#39;m&#39;,&#39;i&#39;,&#39;m&#39;)
+char(0x61646d696e), char(97,100,109,105,110), char(0x61,0x64,0x6d,0x69,0x6e)
+0x61646d696e, concat(&#39;a&#39;,&#39;d&#39;,&#39;m&#39;,&#39;i&#39;,&#39;n&#39;), 0b0110000101100100011011010110100101101110
 </code></pre>
 <hr>
 
