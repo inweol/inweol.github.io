@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="Code Analysis WAF(Web Application Firewall)  웹 방화벽의 원리 파악과 부족한 개발 능력을 키우기 위해 Node.js를 이용한 Reverse Proxy 타입의 WAF를 구축해보았습니다. fs.readFileSync(&quot;..&#x2F;rule&#x2F;waf.rule&quot;).toString().split(&#39;\n&#39;).">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Web Application Firewall">
+<meta property="og:url" content="http://example.com/2021/09/10/Web-Application_Firewall/index.html">
+<meta property="og:site_name" content="TroubleMaker">
+<meta property="og:description" content="Code Analysis WAF(Web Application Firewall)  웹 방화벽의 원리 파악과 부족한 개발 능력을 키우기 위해 Node.js를 이용한 Reverse Proxy 타입의 WAF를 구축해보았습니다. fs.readFileSync(&quot;..&#x2F;rule&#x2F;waf.rule&quot;).toString().split(&#39;\n&#39;).">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-09-10T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-10T16:59:20.818Z">
+<meta property="article:author" content="TroubleMaker">
+<meta property="article:tag" content="Project">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Web Application Firewall</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" "Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post " href="/2021/08/26/SQLi-bypaass/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top " href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post " href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2021/09/10/Web-Application_Firewall/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2021/09/10/Web-Application_Firewall/&text=Web Application Firewall"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2021/09/10/Web-Application_Firewall/&is_video=false&description=Web Application Firewall"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Web Application Firewall&body=Check out this article: http://example.com/2021/09/10/Web-Application_Firewall/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2021/09/10/Web-Application_Firewall/&name=Web Application Firewall&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2021/09/10/Web-Application_Firewall/&t=Web Application Firewall"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Code-Analysis"><span class="toc-number">1.</span> <span class="toc-text">Code Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Demonstration-video"><span class="toc-number">2.</span> <span class="toc-text">Demonstration video</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Web Application Firewall
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">TroubleMaker</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2021-09-10T00:00:00.000Z" itemprop="datePublished">2021-09-10</time>
+        
+      
+    </div>
+
+
+      
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/Project/" rel="tag">Project</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="Code-Analysis"><a href="#Code-Analysis" class="headerlink" title="Code Analysis"></a>Code Analysis</h2><blockquote>
+<p>WAF(Web Application Firewall)</p>
+</blockquote>
+<p>웹 방화벽의 원리 파악과 부족한 개발 능력을 키우기 위해 Node.js를 이용한 Reverse Proxy 타입의 WAF를 구축해보았습니다.</p>
+<pre><code class="js">fs.readFileSync(&quot;../rule/waf.rule&quot;).toString().split(&#39;\n&#39;).forEach(function(waf_regex) &#123;
+    if (waf_regex !== undefined) &#123;
+        RuleData.push(waf_regex);
+    &#125;
+&#125;);
+
+const Regex = (re) =&gt; &#123;
+    return new RegExp(re);
+&#125;
+
+const filtering = (re, d) =&gt; &#123;
+    if(re.exec(d)) &#123;
+        return true;
+    &#125;
+    return false;
+&#125;
+
+const waf = (rule, data) =&gt; &#123;
+    result = true
+    for(let i = 0; i &lt; rule.length; i ++ )&#123;
+        REGEX = Regex(rule[i]);
+        for (key in data) &#123;
+            if (key == &#39;query&#39; || key == &#39;form&#39;) &#123;
+                for (p in data[key])&#123;
+                    if(filtering(REGEX, data[key][p])) &#123;
+                        result = false;
+                    &#125;
+                    if (result == false) &#123; break &#125;
+                &#125;;
+            &#125;
+            if ( result == false ) &#123; break &#125;
+            else&#123;
+                if(filtering(REGEX, data[key])) &#123;
+                    result = false;
+                    break
+                &#125;
+            &#125;
+        &#125;
+        if (result == false) &#123;
+            return result;
+        &#125;
+    &#125;
+    return result;
+&#125;
+</code></pre>
+<p>위 코드의 <code>waf</code>함수는 인자값으로 rule과 data를 전달받아 rule을 기반으로 data에 악의적인 구문이 포함되어 있는지 검사하는 함수이며 rule에는 악의적인 구문을 검사하는 정규표현식, data에는 <code>Request</code>에 포함되어 있는 모든 헤더 및 쿼리와 Raw data가 들어있습니다.</p>
+<pre><code class="js">const proxy_request = async (req, res, condition, ip) =&gt; &#123;
+    await db.all(`select * from waf where ip = ?`, ip, async (err, rows) =&gt; &#123;
+        // 5회 이상이면 응답을 안 함.
+        let count = 0;
+        if (rows.length !== 0) &#123;
+            count = rows[0].count;
+        &#125;
+        if (count &lt;= 5) &#123;
+            if (condition) &#123;
+                await proxy.web(req, res, &#123;
+                    target: `http://localhost:3009/`
+                &#125;);
+            &#125; else &#123;
+                req.url = &#39;/error&#39;;
+                req.method = &#39;GET&#39;;
+                await proxy.web(req, res, &#123;
+                    target: &#39;http://localhost:3009/&#39;
+                &#125;);
+            &#125;
+        &#125; else &#123;
+            console.log(`The $&#123;ip&#125; is block target`);
+        &#125;
+    &#125;);
+&#125;
+</code></pre>
+<p>이번 프로젝트에서 구현한 WAF는 요청값에 악의적인 구문이 포함되어 있을 경우 요청한 IP의 count컬럼을 1씩 증가 시키고, count의 값이 5를 초과하면 IP를 차단하도록 구현하였습니다.</p>
+<p>위의 <code>porxy_request</code>함수를 보면 현재 요청한 사용자의 IP를 확인하고 해당 IP의 count컬럼 값이 5를 초과하는지 검사합니다. 이때 count컬럼의 값이 5를 초과하지 않는다면 정상적인 응답값을 반환하고, 5를 초과하게 된다면 응답값을 반환하지 않고 요청을 끊게됩니다. </p>
+<pre><code class="js">const value_parsing =  (element) =&gt; &#123;
+    let count = 0
+    let searchChar = &#39;=&#39;;
+    let pos = element.indexOf(searchChar);
+
+    while (pos !== -1) &#123;
+        count++;
+        pos = element.indexOf(searchChar, pos + 1);
+    &#125;
+
+    if (count &gt; 1) &#123;
+        return element.substr(element.indexOf(&#39;=&#39;) + 1, element.length);
+    &#125; else &#123;
+        return element.split(&#39;=&#39;)[1];
+    &#125;
+&#125;
+
+const ip_block = async (req, res , ip) =&gt; &#123;
+    await db.all(`select * from waf where ip = ?`, ip, (err, rows) =&gt; &#123;
+        if (err) &#123;throw err;&#125;
+        if (rows.length == 0) &#123;
+            db.run(&#39;insert into waf (ip, count) values(?, ?)&#39;, [ip, 1], async (err) =&gt; &#123;
+                if (err) &#123;console.error(err);&#125;
+                else &#123;
+                    console.log(&#39;[*] Successful Insert statement execution&#39;);
+                    await proxy_request(req, res, false);
+                &#125;
+            &#125;);
+        &#125; else &#123;
+            rows.forEach(async (row) =&gt; &#123;
+                count = row[&#39;count&#39;];
+                if (count &gt; 5) &#123;
+                    console.log(`The $&#123;ip&#125; is block target`);
+                &#125; else &#123;
+                    db.run (&#39;update waf set count=? where ip = ?&#39;, [count + 1, ip], async (err) =&gt; &#123;
+                        if (err) &#123;console.error(err)&#125;
+                        else &#123;
+                            console.log(&#39;[*] Successful Update statement execution&#39;);
+                            await proxy_request(req, res, false);
+                        &#125;
+                    &#125;)
+                &#125;
+            &#125;);
+        &#125;
+    &#125;);
+&#125;
+</code></pre>
+<p><code>value_parsing</code>함수의 경우 파라미터의 값을 정확하게 가져오기 위해 만들어진 함수입니다. 파라미터 값의 경우 “=”를 기준으로 파싱하게 되는데, 만약 요청값에 “=”가 여러개 존재한다면 파라미터의 값을 제대로 파악하지 못하게 됩니다.</p>
+<p><code>ip_block</code>함수는 <code>waf</code>함수에서 걸릴 경우 실행되는 함수입니다. 현재 요청한 IP가 DB에 존재하는지 확인하고, 존재하지 않는다면 해당 IP의 대한 값을 생성하고 만약 존재한다면 해당 IP의 count컬럼 값이 5를 초과하는지 확인하여 초과하면 IP를 차단하고, 초과하지 않는다면 count컬럼의 값을 1만큼 증가시킵니다.</p>
+<pre><code class="js">http.createServer(function (req, res) &#123;
+    setTimeout(async function () &#123;
+        const rhost = req.connection.remoteAddress.split(&#39;ffff:&#39;)[1] ||
+            req.socket.remoteAddress.split(&#39;ffff:&#39;)[1] ||
+            req.connection.socket.remoteAddress.split(&#39;ffff:&#39;)[1];
+
+        console.log(`[*] Connected IP : $&#123;rhost&#125;`)
+        const request_data = &#123;&#39;method&#39;:&#39;&#39;, &#39;host&#39;:&#39;&#39;, &#39;port&#39;:&#39;&#39;, &#39;path&#39;:&#39;&#39;&#125;;
+        request_data.method = req.method;
+        request_data.host = req.headers.host.split(&#39;:&#39;)[0];
+        request_data.port = req.headers.host.split(&#39;:&#39;)[1]; delete req.headers.host
+
+        Object.keys(req.headers).forEach(element =&gt; &#123;
+            request_data[element] = req.headers[element];
+        &#125;)
+
+        if (request_data.method == &quot;GET&quot;) &#123;
+            if (req.url.includes(&#39;?&#39;)) &#123;
+                request_data.path = req.url.split(&#39;?&#39;)[0];
+            &#125; else &#123;
+                request_data.path = req.url;
+            &#125;
+
+            if (req.url.includes(&#39;?&#39;)) &#123;
+                request_data.query = &#123;&#125;;
+                query = decodeURI(req.url).split(&#39;?&#39;)[1].split(&#39;&amp;&#39;);
+                query.forEach(element =&gt; &#123;
+                    request_data.query[element.split(&#39;=&#39;)[0]] = value_parsing(element);
+                &#125;);
+            &#125;
+            if(waf(RuleData, request_data)) &#123;
+                await proxy_request(req, res, true, rhost);
+            &#125; else &#123;
+                await ip_block(req, res, rhost)
+            &#125;
+        &#125; 
+        else if (request_data.method == &quot;POST&quot;) &#123;
+            request_data.path = req.url;
+            request_data.form = &#123;&#125;;
+            query = decodeURIComponent(req[&#39;_readableState&#39;][&#39;buffer&#39;][&#39;head&#39;][&#39;data&#39;].toString()).split(&#39;&amp;&#39;);
+
+            query.forEach(element =&gt; &#123;
+                request_data.form[element.split(&#39;=&#39;)[0]] = value_parsing(element);
+            &#125;);
+            if(waf(RuleData, request_data)) &#123;
+                await proxy_request(req, res, true, rhost);
+            &#125; else &#123;
+                await ip_block(req, res, rhost);
+            &#125;
+        &#125;
+        else &#123;
+            return &quot;hacking is fuck!!!!!!!!&quot;;
+        &#125;
+    &#125;, 500);
+&#125;).listen(8001);
+</code></pre>
+<p>위와 같이 http모듈을 이용하여 프록시 서버를 구동하고 있으며, <code>req</code>객체를 통해 http헤더를 <code>request_data</code>객체에 저장하고 위에서 분석한 <code>waf</code>, <code>ip_block</code>, <code>proxy_request</code>함수를 이용하여 요청 헤더를 검사하고 악의적인 구문이 존재하는지 파악한 뒤 적절한 응답처리 및 IP 차단기능을 실행하고 있습니다.</p>
+<hr>
+<h2 id="Demonstration-video"><a href="#Demonstration-video" class="headerlink" title="Demonstration video"></a>Demonstration video</h2><blockquote>
+<p>Demonstrate by get method</p>
+</blockquote>
+<p><video width="800px" height="600px" src="https://github.com/WII-Project/wii/raw/main/video/get-method.mov" controls  muted></video></p>
+<blockquote>
+<p>Demonstrate by post method</p>
+</blockquote>
+<p><video width="800px" height="600px" src="https://github.com/WII-Project/wii/raw/main/video/post-method.mov" controls  muted></video></p>
+<hr>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Code-Analysis"><span class="toc-number">1.</span> <span class="toc-text">Code Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Demonstration-video"><span class="toc-number">2.</span> <span class="toc-text">Demonstration video</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2021/09/10/Web-Application_Firewall/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2021/09/10/Web-Application_Firewall/&text=Web Application Firewall"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2021/09/10/Web-Application_Firewall/&is_video=false&description=Web Application Firewall"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Web Application Firewall&body=Check out this article: http://example.com/2021/09/10/Web-Application_Firewall/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2021/09/10/Web-Application_Firewall/&title=Web Application Firewall"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2021/09/10/Web-Application_Firewall/&name=Web Application Firewall&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2021/09/10/Web-Application_Firewall/&t=Web Application Firewall"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2021
+    TroubleMaker
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>
